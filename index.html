@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+
+  <title>Fitts Law Experiment</title>
+
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+.current {
+    fill: red;
+}
+
+  </style>
+  <script src="d3/d3.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+
+</body>
+<script>
+var data = [9, 4, 10, 5, 11, 6, 1, 7, 2, 8, 3];
+var count = 0;
+var arrcnt = 0;
+var actualdata=[];
+var combos = [];
+var array1 = [200, 250, 150];
+var array2 = [9, 18];
+for(var i = 0; i < array1.length; i++)
+{
+     for(var j = 0; j < array2.length; j++)
+     {
+        combos.push(array1[i] +"#"+ array2[j])
+     }
+}
+function givevalues(tem)
+{
+  var tem = tem.split("#");
+  var ru =[];
+  ru[0]=Number(tem[0]);
+  ru[1]=Number(tem[1]);
+  return ru;
+}
+var t=givevalues(combos[0]);
+drawcircles(t[0],t[1]);
+arrcnt++;
+function drawcircles(ra,sr)
+{
+  var r = ra,
+      w = 600,
+      h = 600,
+      rad = Math.PI/180,
+      interval = 360/data.length;
+
+  var svg = d3.select('body')
+      .append('svg')
+      .attr('width', w)
+      .attr('height', h)
+      .append('g')
+      .attr('transform', 'translate(' + w/2 + ',' + w/2 + ')');
+
+  svg.selectAll('g')
+      .data(data)
+      .enter()
+      .append('circle')
+      .attr('fill', 'steelblue')
+      .attr('class','circle')
+      .attr('id', function(d){return d;})
+      .attr('r', sr)
+      .attr('transform', function (d, i) {
+          return "translate(" + ((w/2-r) * Math.cos((interval*i) * Math.PI/180)) + "," + ((w/2-r) * Math.sin((interval*i) * Math.PI/180)) + ")";
+      });
+      $(".circle").click(function(ev){
+        if(this.classList.contains("current"))
+        {
+          count++;
+          var test={};
+          test.width=2*(this.r.baseVal.value);
+          test.xaxis=ev.clientX;
+          test.yaxis=ev.clientY;
+          var ti = new Date();
+          test.timetaken = ti.getTime();
+          actualdata.push(test);
+          //$("#"+this.id+"").addClass("passive");
+          $("#"+this.id+"").removeClass("current");
+          var nextele = selectCircle(this.id);
+          console.log(nextele);
+          $("#"+nextele+"").addClass("current");
+          //$("#"+nextele+"").removeClass("passive");
+      }
+      if(count==11)
+      {
+        if(arrcnt<combos.length)
+        {
+          var dfg = givevalues(combos[arrcnt]);
+          d3.select("body").selectAll('*').remove();
+          drawcircles(dfg[0],dfg[1]);
+          $("#9").addClass("current");
+          count=0;
+          arrcnt++;
+        }
+        else {
+          var pp =[];
+          pp.push(JSON.stringify(actualdata));
+          var reader = new FileReader();
+          var out = new Blob(pp, {type: 'text/plain'});
+          reader.onload = function(e){
+            window.location.href = reader.result;
+          }
+          reader.readAsDataURL(out);
+        }
+      }
+      });
+}
+function ConvertToCSV(objArray) {
+            var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+            var str = '';
+
+            for (var i = 0; i < array.length; i++) {
+                var line = '';
+                for (var index in array[i]) {
+                    if (line != '') line += ','
+
+                    line += array[i][index];
+                }
+
+                str += line + '\r\n';
+            }
+
+            return str;
+        }
+function selectCircle(it){
+  switch(it)
+  {
+    case "9":
+        return 1;
+        break;
+    case "1":
+        return 4;
+        break;
+    case "4":
+        return 7;
+        break;
+    case "7":
+        return 10;
+        break;
+    case "10":
+        return 2;
+        break;
+    case "2":
+        return 5;
+        break;
+    case "5":
+        return 8;
+        break;
+    case "8":
+        return 11;
+        break;
+    case "11":
+        return 3;
+        break;
+    case "3":
+        return 6;
+        break;
+    case "6":
+        return 9;
+        break;
+  }
+}
+ $("#9").addClass("current");
+
+</script>
+</html>

@@ -68,9 +68,12 @@ function drawcircles(ra,sr)
       .attr('class','circle')
       .attr('id', function(d){return d;})
       .attr('r', sr)
-      .attr('transform', function (d, i) {
-          return "translate(" + ((w/2-r) * Math.cos((interval*i) * Math.PI/180)) + "," + ((w/2-r) * Math.sin((interval*i) * Math.PI/180)) + ")";
-      });
+      .attr('cx', function (d, i) {
+        return ((w/2-r) * Math.cos((interval*i) * Math.PI/180));
+    })
+    .attr('cy', function (d, i) {
+        return ((w/2-r) * Math.sin((interval*i) * Math.PI/180));
+    });
       $(".circle").click(function(ev){
         if(this.classList.contains("current"))
         {
@@ -79,13 +82,15 @@ function drawcircles(ra,sr)
           test.width=2*(this.r.baseVal.value);
           test.xaxis=ev.clientX;
           test.yaxis=ev.clientY;
+          test.xcentre=this.cx.baseVal.value+300;
+          test.ycentre=this.cy.baseVal.value+300;
           var ti = new Date();
           test.timetaken = ti.getTime();
           actualdata.push(test);
           //$("#"+this.id+"").addClass("passive");
           $("#"+this.id+"").removeClass("current");
           var nextele = selectCircle(this.id);
-          console.log(nextele);
+          //console.log(nextele);
           $("#"+nextele+"").addClass("current");
           //$("#"+nextele+"").removeClass("passive");
       }

@@ -10,10 +10,13 @@
     fill: red;
 }
 
+.body{
+  margin: 0px;
+}
+
   </style>
   <script src="d3/d3.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
 </head>
 
 <body>
@@ -66,24 +69,29 @@ function drawcircles(ra,sr)
       .append('circle')
       .attr('fill', 'steelblue')
       .attr('class','circle')
-      .attr('id', function(d){return d;})
+      .attr('id', function(d){ return d;})
       .attr('r', sr)
       .attr('cx', function (d, i) {
-        return ((w/2-r) * Math.cos((interval*i) * Math.PI/180));
-    })
-    .attr('cy', function (d, i) {
-        return ((w/2-r) * Math.sin((interval*i) * Math.PI/180));
-    });
+          return ((w/2 -r) * Math.cos((interval*i) * Math.PI/180));
+      })
+      .attr('cy', function (d, i){
+          return ((w/2-r) * Math.sin((interval*i) * Math.PI/180));
+      });
       $(".circle").click(function(ev){
         if(this.classList.contains("current"))
         {
           count++;
           var test={};
           test.width=2*(this.r.baseVal.value);
-          test.xaxis=ev.clientX;
-          test.yaxis=ev.clientY;
+          test.xaxis=ev.clientX-8;
+          test.yaxis=ev.clientY-8;
           test.xcentre=this.cx.baseVal.value+300;
           test.ycentre=this.cy.baseVal.value+300;
+          console.log(test.xcentre+" : "+test.ycentre);
+          console.log(test.xaxis +" : "+test.yaxis);
+          console.log(this.r.baseVal.value);
+          console.log(Math.sqrt(Math.pow((test.xaxis-test.xcentre),2)+Math.pow((test.yaxis-test.ycentre),2)));
+          //console.log($("#"+this.id+""))
           var ti = new Date();
           test.timetaken = ti.getTime();
           actualdata.push(test);
@@ -101,13 +109,15 @@ function drawcircles(ra,sr)
           var dfg = givevalues(combos[arrcnt]);
           d3.select("body").selectAll('*').remove();
           drawcircles(dfg[0],dfg[1]);
-          $("#9").addClass("current");
+          $("#"+getRandomIntInclusive(1,9)+"").addClass("current");
           count=0;
           arrcnt++;
         }
         else {
           var pp =[];
-          pp.push(JSON.stringify(actualdata));
+
+          pp.push(JSON.stringify((operateondata(actualdata))));
+
           var reader = new FileReader();
           var out = new Blob(pp, {type: 'text/plain'});
           reader.onload = function(e){
@@ -173,7 +183,125 @@ function selectCircle(it){
         break;
   }
 }
- $("#9").addClass("current");
+$("#"+getRandomIntInclusive(1,9)+"").addClass("current");
+function getRandomIntInclusive(min, max) {
+ min = Math.ceil(min);
+ max = Math.floor(max);
+ return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+ function sqr(x) { return x * x; }
+ function dist2(v, w) { return sqr(v.x - w.x) + sqr(v.y - w.y); }
+ function distToSegmentSquared(p, v, w) {
+   var l2 = dist2(v, w);
+   if (l2 == 0) return dist2(p, v);
+   var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+   t = Math.max(0, Math.min(1, t));
+   return dist2(p, { x: v.x + t * (w.x - v.x),
+                     y: v.y + t * (w.y - v.y) });
+ }
+ function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
 
+ function sqr(x) { return x * x; }
+ function dist2(v, w) { return sqr(v.x - w.x) + sqr(v.y - w.y); }
+ function distToSegmentSquared(p, v, w) {
+   var l2 = dist2(v, w);
+   if (l2 == 0) return dist2(p, v);
+   var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+   t = Math.max(0, Math.min(1, t));
+   return dist2(p, { x: v.x + t * (w.x - v.x),
+                     y: v.y + t * (w.y - v.y) });
+ }
+ function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
+
+ function operateondata(ds)
+ {
+   ds[0].xaxis=ds[0].xaxis-8;
+   ds[0].yaxis=ds[0].yaxis-8;
+   for(var i=1;i<ds.length;i++)
+     {
+       var temp1={};
+       var temp2={};
+       var temp3={};
+       ds[i].xaxis=ds[i].xaxis-8;
+       ds[i].yaxis=ds[i].yaxis-8;
+       temp1.x=ds[i-1].xcentre;
+       temp1.y=ds[i-1].ycentre;
+       temp2.x=ds[i].xcentre;
+       temp2.y=ds[i].ycentre;
+       temp3.x=ds[i].xaxis;
+       temp3.y=ds[i].yaxis;
+       var xhiteff = distToSegment(temp3,temp1,temp2);
+       ds[i].xhit = (xhiteff)*(xhiteff);
+       ds[i].mt = ds[i].timetaken - ds[i-1].timetaken;
+       ds[i].distance = Math.sqrt(Math.pow((ds[i].xaxis-ds[i-1].xaxis),2)+Math.pow((ds[i].yaxis-ds[i-1].yaxis),2));
+       ds[i].id = Math.log2((ds[i].distance/ds[i].width)+1);
+     }
+   var am =groupAverageMT(ds,11);
+   var dee =groupAverageDe(ds,11);
+   var xh = groupAverageXH(ds,11);
+
+   function groupAverageMT(arr, n) {
+     var result = [];
+     for (var i = 0; i < arr.length;) {
+       var sum = 0;
+       for(var j = 0; j< n; j++){
+         // Check if value is numeric. If not use default value as 0
+         sum += +arr[i++].mt || 0
+       }
+       result.push(sum/n);
+     }
+     return result
+   }
+   function groupAverageDe(arr, n) {
+     var result = [];
+     for (var i = 0; i < arr.length;) {
+       var sum = 0;
+       for(var j = 0; j< n; j++){
+         // Check if value is numeric. If not use default value as 0
+         sum += +arr[i++].distance || 0
+       }
+       result.push(sum/n);
+     }
+     return result
+   }
+   function groupAverageXH(arr, n) {
+     var result = [];
+     for (var i = 0; i < arr.length;) {
+       var sum = 0;
+       for(var j = 0; j< n; j++){
+         // Check if value is numeric. If not use default value as 0
+         sum += +arr[i++].xhit || 0
+       }
+       result.push(sum/n);
+     }
+     return result
+   }
+   for(var k=0;k<ds.length;k++)
+     {
+         if(k<11)
+         {
+           p=0;
+         }
+         else if(k>11&&k<22)
+           p=1;
+         else if(k>22&&k<33)
+          p=2;
+         else if(k>33&&k<44)
+           p=3;
+         else if(k>44&&k<55)
+             p=4;
+         else if(k>55&&k<66)
+             p=5;
+         ds[k].amt=am[p];
+         ds[k].ade=dee[p];
+         ds[k].we=Math.sqrt(xh[p])*4.133;
+     }
+     for(var l=1;l<ds.length;l++)
+       {
+         ds[l].IDE = Math.log2((ds[l].ade/ds[l].we)+1);
+       }
+    return ds;
+ }
 </script>
+
 </html>
